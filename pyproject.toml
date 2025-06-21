@@ -1,0 +1,15 @@
+[project]
+name = "new-aws"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.13.4",
+    "playwright>=1.52.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "requests>=2.32.4",
+    "selenium>=4.33.0",
+    "selenium-stealth>=1.0.6",
+]
