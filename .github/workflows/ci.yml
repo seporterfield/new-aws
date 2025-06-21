@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+    
+    - name: Set up Python
+      run: uv python install 3.12
+    
+    - name: Install dependencies
+      run: |
+        uv sync --extra dev
+    
+    - name: Run ruff linting
+      run: |
+        uv run ruff check .
+    
+    - name: Run mypy type checking
+      run: |
+        uv run mypy . --ignore-missing-imports
+      continue-on-error: true  # Allow mypy to fail while we're improving type coverage
+    
+    - name: Run tests
+      run: |
+        uv run python test_production_dry_run.py
+        uv run python email_service.py
+      continue-on-error: true  # Some tests may require external services
+    
+    - name: Validate configuration
+      run: |
+        uv run python -c "import json; json.load(open('sample_account_details.json'))"
+    
+    - name: Test justfile commands
+      run: |
+        # Install just
+        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+        just install
+        just validate
