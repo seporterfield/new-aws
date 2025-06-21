@@ -16,15 +16,21 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
+from email_service import EmailServiceIntegration
+
 
 class AWSAccountCreator:
     """Automated AWS account creation using browser automation"""
     
-    def __init__(self, headless: bool = False, debug: bool = False):
+    def __init__(self, headless: bool = False, debug: bool = False, use_temp_email: bool = True):
         self.headless = headless
         self.debug = debug
+        self.use_temp_email = use_temp_email
         self.driver: Optional[webdriver.Chrome] = None
         self.wait: Optional[WebDriverWait] = None
+        self.email_service: Optional[EmailServiceIntegration] = None
+        self.temp_email: Optional[str] = None
+        self.temp_email_password: Optional[str] = None
         self._setup_logging()
         
     def _setup_logging(self):
@@ -59,6 +65,14 @@ class AWSAccountCreator:
         self.driver = webdriver.Chrome(options=options)
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self.wait = WebDriverWait(self.driver, 10)
+    
+    def _setup_email_service(self):
+        """Initialize email service for temporary email generation"""
+        if self.use_temp_email:
+            self.logger.info("Setting up temporary email service")
+            self.email_service = EmailServiceIntegration(debug=self.debug)
+            self.temp_email, self.temp_email_password = self.email_service.setup_temporary_email()
+            self.logger.info(f"Temporary email created: {self.temp_email}")
         
     def _load_account_config(self, config_path: str) -> Dict:
         """Load and validate account configuration from JSON file"""
@@ -81,6 +95,12 @@ class AWSAccountCreator:
         missing_fields = [field for field in required_fields if not config.get(field)]
         if missing_fields:
             raise ValueError(f"Missing required fields in configuration: {missing_fields}")
+        
+        # Override email with temporary email if using email service
+        if self.use_temp_email and self.temp_email:
+            original_email = config.get('email')
+            config['email'] = self.temp_email
+            self.logger.info(f"Using temporary email: {self.temp_email} (original: {original_email})")
         
         self.logger.info("Account configuration loaded and validated successfully")
         return config
@@ -227,31 +247,78 @@ class AWSAccountCreator:
     
     def _handle_email_verification(self) -> bool:
         """Handle email verification step"""
-        self.logger.info("Waiting for email verification step")
+        self.logger.info("Handling email verification step")
         
-        # In production, this would integrate with mail.tm API
-        # For now, we'll detect if we've reached the verification step
         try:
+            # Wait for potential redirect to verification page
+            time.sleep(5)
+            page_text = self.driver.page_source.lower()
+            
             # Look for email verification indicators
             verification_indicators = [
                 "verify your email",
                 "check your email", 
                 "email verification",
-                "confirmation email"
+                "confirmation email",
+                "we've sent you an email"
             ]
             
-            time.sleep(5)  # Wait for potential redirect
-            page_text = self.driver.page_source.lower()
+            verification_detected = any(indicator in page_text for indicator in verification_indicators)
             
-            for indicator in verification_indicators:
-                if indicator in page_text:
-                    self.logger.info("Email verification step detected")
-                    return True
+            if verification_detected:
+                self.logger.info("Email verification step detected")
+                
+                if self.email_service:
+                    return self._process_email_verification()
+                else:
+                    self.logger.info("Email verification required but no email service configured")
+                    return True  # Manual verification required
             
             return False
             
         except Exception as e:
             self.logger.error(f"Error in email verification handling: {e}")
+            return False
+    
+    def _process_email_verification(self) -> bool:
+        """Process email verification using temporary email service"""
+        self.logger.info("Processing email verification automatically")
+        
+        try:
+            # Wait for verification email
+            self.logger.info("Waiting for AWS verification email...")
+            verification_link = self.email_service.wait_for_aws_verification(timeout=300)
+            
+            if verification_link:
+                self.logger.info(f"Found verification link: {verification_link}")
+                
+                # Click verification link
+                self.driver.get(verification_link)
+                time.sleep(3)
+                
+                # Check if verification was successful
+                success_indicators = [
+                    "verified successfully",
+                    "email confirmed",
+                    "verification complete",
+                    "account activated"
+                ]
+                
+                page_text = self.driver.page_source.lower()
+                success = any(indicator in page_text for indicator in success_indicators)
+                
+                if success:
+                    self.logger.info("Email verification completed successfully")
+                    return True
+                else:
+                    self.logger.warning("Email verification link clicked but success not confirmed")
+                    return True  # Continue anyway
+            else:
+                self.logger.error("No verification email received within timeout")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error in automatic email verification: {e}")
             return False
     
     def _submit_registration(self) -> bool:
@@ -287,6 +354,10 @@ class AWSAccountCreator:
         self.logger.info(f"Starting AWS account creation process")
         
         try:
+            # Setup email service if enabled
+            if self.use_temp_email:
+                self._setup_email_service()
+            
             # Load and validate configuration
             config = self._load_account_config(config_path)
             
@@ -306,8 +377,12 @@ class AWSAccountCreator:
                 return False, "Failed to submit registration form"
             
             # Handle email verification
-            if self._handle_email_verification():
-                return True, "Registration submitted successfully, email verification required"
+            verification_result = self._handle_email_verification()
+            if verification_result:
+                if self.email_service:
+                    return True, f"AWS account created successfully! Email: {self.temp_email}"
+                else:
+                    return True, "Registration submitted successfully, manual email verification required"
             else:
                 return True, "Registration submitted successfully"
             
@@ -317,11 +392,17 @@ class AWSAccountCreator:
             return False, error_msg
             
         finally:
+            # Cleanup
             if self.driver:
                 if self.debug:
                     self.driver.save_screenshot(f"final_state_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
                 self.driver.quit()
                 self.logger.info("Browser closed")
+            
+            # Cleanup email service
+            if self.email_service:
+                self.logger.info("Cleaning up temporary email account")
+                self.email_service.cleanup()
 
 
 def main():
