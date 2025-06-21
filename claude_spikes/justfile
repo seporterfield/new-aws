@@ -1,0 +1,51 @@
+# Justfile for AWS registration automation experiments
+
+# Install experimental dependencies
+install-deps:
+    uv add playwright selenium beautifulsoup4 requests selenium-stealth pytest-asyncio
+
+# Install Playwright browsers
+install-playwright:
+    uv run playwright install
+
+# Test basic requests approach (no browser needed)
+test-requests:
+    uv run python test_requests_aws.py
+
+# Test Selenium approach
+test-selenium:
+    uv run python test_selenium_aws.py
+
+# Test Playwright approach
+test-playwright:
+    uv run pytest test_playwright_aws.py -v
+
+# Test Skyvern approaches
+test-skyvern:
+    uv run pytest test_skyvern_aws_approaches.py -v
+
+# Test original Skyvern basic
+test-skyvern-basic:
+    uv run pytest test_skyvern_basic.py -v
+
+# Run comprehensive comparison test
+test-all:
+    uv run python test_browser_comparison.py
+
+# Detailed analysis of working approaches
+test-detailed:
+    uv run python test_working_approaches.py
+
+# Quick check which dependencies are available
+check-deps:
+    #!/bin/bash
+    echo "Checking available dependencies..."
+    uv run python -c "import sys; deps = ['requests', 'bs4', 'selenium', 'playwright', 'skyvern']; [print(f'✓ {dep}') if __import__(dep) else print(f'✗ {dep}') for dep in deps]" 2>/dev/null || echo "Some deps missing"
+
+# Clean up generated files
+clean:
+    rm -f *.png *.html *.json aws_test_results_*.json
+
+# Run a simple AWS page fetch test
+quick-test:
+    uv run python -c "import requests; r = requests.get('https://portal.aws.amazon.com/billing/signup', timeout=10); print(f'Status: {r.status_code}'); print(f'AWS content: {\"aws\" in r.text.lower() or \"amazon\" in r.text.lower()}'); print(f'Length: {len(r.text)} chars')"

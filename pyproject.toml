@@ -1,0 +1,14 @@
+[project]
+name = "new-aws"
+version = "0.1.0"
+description = "Automated AWS account creation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "selenium>=4.33.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.0",
+]

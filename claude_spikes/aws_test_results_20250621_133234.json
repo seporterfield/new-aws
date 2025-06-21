@@ -1,0 +1,26 @@
+{
+  "Playwright": {
+    "success": true,
+    "details": "Page loaded, title: AWS Console - Signup, found 3 inputs",
+    "duration": 4.561249732971191,
+    "timestamp": "2025-06-21T13:32:39.010281"
+  },
+  "Selenium": {
+    "success": true,
+    "details": "Page loaded, title: AWS Console - Signup, found 2 inputs",
+    "duration": 2.951190233230591,
+    "timestamp": "2025-06-21T13:32:41.974003"
+  },
+  "Requests+BeautifulSoup": {
+    "success": true,
+    "details": "Status: 200, found 54 inputs, 0 forms",
+    "duration": 0.29642224311828613,
+    "timestamp": "2025-06-21T13:32:42.270473"
+  },
+  "Skyvern": {
+    "success": false,
+    "details": "No .env file found. Please run 'skyvern init' first to set up your environment.",
+    "duration": 5.534616947174072,
+    "timestamp": "2025-06-21T13:32:47.805405"
+  }
+}

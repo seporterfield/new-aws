@@ -1,0 +1,26 @@
+{
+  "Playwright": {
+    "success": true,
+    "details": "Page loaded, title: AWS Console - Signup, found 3 inputs",
+    "duration": 4.48485541343689,
+    "timestamp": "2025-06-21T13:36:41.407239"
+  },
+  "Selenium": {
+    "success": true,
+    "details": "Page loaded, title: AWS Console - Signup, found 2 inputs",
+    "duration": 2.874708890914917,
+    "timestamp": "2025-06-21T13:36:44.292920"
+  },
+  "Requests+BeautifulSoup": {
+    "success": true,
+    "details": "Status: 200, found 54 inputs, 0 forms",
+    "duration": 0.3027045726776123,
+    "timestamp": "2025-06-21T13:36:44.595676"
+  },
+  "Skyvern": {
+    "success": false,
+    "details": "cannot import name 'Skyvern' from 'skyvern' (unknown location)",
+    "duration": 0.0004620552062988281,
+    "timestamp": "2025-06-21T13:36:44.596430"
+  }
+}
