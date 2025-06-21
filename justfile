@@ -23,6 +23,20 @@ clean:
     rm -f *.png *.html
     cd claude_spikes && just clean
 
+# Lint and format code
+lint:
+    uv run ruff check .
+    uv run ruff format --check .
+    uv run isort --check-only .
+    uv run black --check .
+
+# Format code automatically
+format:
+    uv run ruff check --fix .
+    uv run ruff format .
+    uv run isort .
+    uv run black .
+
 # Show project status and next steps
 status:
     @echo "=== AWS Account Automation Project Status ==="
