@@ -41,7 +41,7 @@ def test_aws_creator_with_email():
         
         # Test configuration loading with email override
         config = creator._load_account_config("sample_account_details.json")
-        print(f"✓ Configuration loaded")
+        print("✓ Configuration loaded")
         
         # Setup email service
         creator._setup_email_service()

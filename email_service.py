@@ -2,11 +2,10 @@
 Email Service Integration
 Temporary email generation and verification using mail.tm API for AWS account creation.
 """
-import json
 import time
 import requests
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from dataclasses import dataclass
 
 
@@ -90,7 +89,6 @@ class MailTMEmailService:
             response = self.session.post(f"{self.base_url}/accounts", json=account_data)
             response.raise_for_status()
             
-            account_info = response.json()
             self.email_address = email_address
             
             self.logger.info(f"Created temporary email: {email_address}")

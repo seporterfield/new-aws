@@ -2,7 +2,6 @@
 Dry run test for production AWS account creator
 Tests the basic functionality without actually submitting registration
 """
-import json
 from aws_account_creator import AWSAccountCreator
 
 
@@ -14,7 +13,7 @@ def test_config_loading():
     
     try:
         config = creator._load_account_config("sample_account_details.json")
-        print(f"✓ Configuration loaded successfully")
+        print("✓ Configuration loaded successfully")
         print(f"  Email: {config.get('email', 'NOT SET')}")
         print(f"  Account name: {config.get('account_name', 'NOT SET')}")
         print(f"  Full name: {config.get('full_name', 'NOT SET')}")

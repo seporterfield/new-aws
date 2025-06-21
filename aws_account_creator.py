@@ -6,7 +6,6 @@ import json
 import time
 import logging
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 from selenium import webdriver
@@ -109,6 +108,9 @@ class AWSAccountCreator:
         """Navigate to AWS signup page and verify it loaded"""
         self.logger.info("Navigating to AWS signup page")
         
+        if not self.driver or not self.wait:
+            return False
+        
         try:
             self.driver.get("https://portal.aws.amazon.com/billing/signup")
             
@@ -189,7 +191,7 @@ class AWSAccountCreator:
     
     def _fill_field(self, selectors: list, value: str, field_name: str) -> bool:
         """Try multiple selectors to find and fill a form field"""
-        if not value:
+        if not value or not self.driver:
             return False
             
         for selector in selectors:
@@ -237,7 +239,7 @@ class AWSAccountCreator:
                 # Try to select by visible text first, then by value
                 try:
                     select.select_by_visible_text(value)
-                except:
+                except Exception:
                     select.select_by_value(value)
                 self.logger.debug(f"Selected '{value}' from dropdown {selector}")
         except NoSuchElementException:
@@ -351,7 +353,7 @@ class AWSAccountCreator:
     
     def create_account(self, config_path: str) -> Tuple[bool, str]:
         """Main method to create AWS account with given configuration"""
-        self.logger.info(f"Starting AWS account creation process")
+        self.logger.info("Starting AWS account creation process")
         
         try:
             # Setup email service if enabled
